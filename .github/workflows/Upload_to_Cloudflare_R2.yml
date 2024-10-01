@@ -1,0 +1,26 @@
+name: Upload to Cloudflare R2
+
+on:
+  push:
+    branches:
+      - master  # 触发条件，可以根据需要更改
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        aws-region: auto
+        aws-endpoint-url: ${{ secrets.R2_ENDPOINT }}
+
+    - name: Upload files to R2
+      run: |
+        aws s3 cp ./path/to/your/assets s3://${{ secrets.R2_BUCKET_NAME }}/ --recursive
