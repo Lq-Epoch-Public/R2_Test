@@ -3,7 +3,7 @@ name: Upload to Cloudflare R2
 on:
   push:
     branches:
-      - main  # 触发条件，可以根据需要更改
+      - main  # Trigger condition, can be changed as needed
 
 jobs:
   upload:
@@ -15,37 +15,38 @@ jobs:
 
     - name: Compress code into ZIP
       run: |
-        zip -r code.zip .  # 压缩当前目录的所有内容
+        zip -r code.zip .  # Compress all contents of the current directory
 
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x'  # 始终使用最新的 Python 3.x 稳定版本
+        python-version: '3.x'  # Always use the latest stable version of Python 3.x
 
     - name: Install boto3
       run: |
         pip install boto3
 
     - name: Upload ZIP file to R2
+      run: |
+        python - << 'EOF'
+import boto3
+import os
+
+# Set up the R2 client
+session = boto3.session.Session()
+client = session.client(
+    's3',
+    endpoint_url=os.environ['R2_ENDPOINT'],
+    aws_access_key_id=os.environ['R2_ACCESS_KEY_ID'],
+    aws_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'],
+)
+
+# Upload the ZIP file
+with open('code.zip', 'rb') as data:
+    client.upload_fileobj(data, os.environ['R2_BUCKET_NAME'], 'code.zip')
+EOF
       env:
         R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
         R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
         R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-      run: |
-        python - <<EOF
-import boto3
-from botocore.client import Config
-
-# 创建 S3 客户端
-s3 = boto3.client(
-    's3',
-    aws_access_key_id='${{ secrets.R2_ACCESS_KEY_ID }}',
-    aws_secret_access_key='${{ secrets.R2_SECRET_ACCESS_KEY }}',
-    endpoint_url='${{ secrets.R2_ENDPOINT }}',
-    config=Config(signature_version='s3v4')
-)
-
-# 上传文件
-s3.upload_file('code.zip', '${{ secrets.R2_BUCKET_NAME }}', 'code.zip')
-EOF
