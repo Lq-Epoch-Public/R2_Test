@@ -32,5 +32,5 @@ jobs:
   
     - name: Upload to Cloudflare R2  
       run: |  
-        aws s3 cp code.zip s3://${{ secrets.R2_BUCKET_NAME }}/code.zip --endpoint-url=${{ secrets.R2_ENDPOINT }}  
+        aws s3 cp code.zip s3://lq-test/code.zip --endpoint-url=https://c7c9a6c6ea868691fb80007dfdbb44a9.r2.cloudflarestorage.com 
   
